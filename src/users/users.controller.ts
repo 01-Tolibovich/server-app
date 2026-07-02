@@ -1,11 +1,13 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
+import { User, UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
+    constructor(private readonly usersService: UsersService) {}
 
     @Get()
-    getAllUsers(): string {
-        return "All users"
+    getAllUsers(): User[] {
+        return this.usersService.getAllUsers()
     }
 
     @Get("about")
@@ -19,21 +21,15 @@ export class UsersController {
     }
 
     @Get(":id")
-    getUserById(@Param("id") id: string): string {
+    getUserById(@Param("id") id: string): User | undefined {
 
-        if (id === "0") {
-            throw new NotFoundException("ID не может быть 0")
-        }
-        return `User ID: ${id}`
+        return this.usersService.getUserById(+id)
     }
 
     @Post()
     create(@Body() body: any) {
-
-        if (!body.name) {
-            throw new NotFoundException("Name is required")
-        }
-        return {message: "User created", data: body}
+        
+        return this.usersService.createUser(body.name, body.age)
     }
 
     @Put(":id")
