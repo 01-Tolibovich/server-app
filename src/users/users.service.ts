@@ -1,45 +1,37 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './create-users.dto';
-
-export type User = {
-    id: number | undefined;
-    name: string | undefined;
-    age: number | undefined;
-    bio?: string | undefined;
-};
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './user.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
 
-    private users: User[] = [
-        { id: 1, name: "Ivan", age: 25, bio: "I am a software developer with a passion for creating innovative solutions. I have experience in various programming languages and frameworks, and I enjoy learning new technologies." },
-        { id: 2, name: "John", age: 30, bio: "John is a marketing professional with experience in digital marketing and social media strategy." },
-        { id: 3, name: "Jane", age: 28, bio: "Jane is a graphic designer with a strong portfolio in branding and visual communication." }
-    ]
+  getAllUsers() {
+    return this.usersRepository.find();
+  }
 
-    getAllUsers(): User[] {
-        return this.users;
+  getUserById(id: number) {
+    const user = this.usersRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
-    getUserById(id: number): User | undefined {
-        const user = this.users.find(user => user.id === id);
+    return user;
+  }
 
-        if (!user) {
-            throw new NotFoundException("User not found")
-        }
+  createUser(body: CreateUserDto) {
+    const name = body.name;
+    const age = body.age;
+    const bio = body.bio;
 
-        return user;
-    }
+    const newUser = this.usersRepository.create({ name, age, bio });
 
-    createUser(body: CreateUserDto): User {
-        
-        const newUser: User = {
-            ...body,
-            id: this.users.length + 1,
-        }
-
-        this.users.push(newUser);
-
-        return newUser;
-    }
+    return this.usersRepository.save(newUser);
+  }
 }
